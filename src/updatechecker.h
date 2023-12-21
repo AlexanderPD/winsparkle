@@ -87,6 +87,14 @@ protected:
     virtual void Run();
 };
 
+/// Single-use checker: checks for updates and terminates itself
+class NoUIUpdateChecker : public UpdateChecker
+{
+protected:
+    virtual void Run();
+    virtual bool ShouldAutomaticallyInstall() const { return true; }
+};
+
 
 /**
     Update checker used for manual checking.

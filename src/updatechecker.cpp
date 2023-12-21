@@ -241,6 +241,9 @@ void UpdateChecker::PerformUpdateCheck()
         const std::string currentVersion =
                 WideToAnsi(Settings::GetAppBuildVersion());
 
+        Settings::WriteConfigValue("LastCurrentVersion", currentVersion);
+        Settings::WriteConfigValue("LastAppcastVersion", appcast.Version);
+
         // Check if our version is out of date.
         if ( !appcast.IsValid() || CompareVersions(currentVersion, appcast.Version) >= 0 )
         {
@@ -319,6 +322,14 @@ void PeriodicUpdateChecker::Run()
 
 
 void OneShotUpdateChecker::Run()
+{
+    // no initialization to do, so signal readiness immediately
+    SignalReady();
+
+    PerformUpdateCheck();
+}
+
+void NoUIUpdateChecker::Run()
 {
     // no initialization to do, so signal readiness immediately
     SignalReady();

@@ -413,6 +413,17 @@ WIN_SPARKLE_API void __cdecl win_sparkle_check_update_without_ui()
     CATCH_ALL_EXCEPTIONS
 }
 
+WIN_SPARKLE_API void __cdecl win_sparkle_check_update_without_ui_and_install()
+{
+    try
+    {
+        // Run the check in background. Never shows UI
+        UpdateChecker* check = new NoUIUpdateChecker();
+        check->Start();
+    }
+    CATCH_ALL_EXCEPTIONS
+}
+
 WIN_SPARKLE_API void __cdecl win_sparkle_set_user_run_installer_callback(win_sparkle_user_run_installer_callback_t callback)
 {
     ApplicationController::SetUserRunInstallerCallback(callback);
