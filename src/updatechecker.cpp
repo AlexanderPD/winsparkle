@@ -243,6 +243,9 @@ void UpdateChecker::PerformUpdateCheck()
 
         Settings::WriteConfigValue("LastCurrentVersion", currentVersion);
         Settings::WriteConfigValue("LastAppcastVersion", appcast.Version);
+        // Settings::WriteConfigValue("LastAppcastData", appcast_xml.data);
+        // Settings::WriteConfigValue("DEBUG", "current: " + currentVersion + ", appcast: " + appcast.Version);
+        // Settings::WriteConfigValue("DEBUG2", "current: " + currentVersion + ", appcast: " + appcast.Version);
 
         // Check if our version is out of date.
         if ( !appcast.IsValid() || CompareVersions(currentVersion, appcast.Version) >= 0 )

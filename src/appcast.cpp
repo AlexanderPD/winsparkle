@@ -25,6 +25,7 @@
 
 #include "appcast.h"
 #include "error.h"
+// #include "settings.h"
 
 #include <expat.h>
 #include <vector>
@@ -93,8 +94,10 @@ struct ContextData
 
 bool is_windows_version_acceptable(const Appcast &item)
 {
-    if (item.MinOSVersion.empty())
+    if (item.MinOSVersion.empty()) {
+        // Settings::WriteConfigValue("XmlWindowsAccettable", "yes");
         return true;
+    }
 
     OSVERSIONINFOEXW osvi = { sizeof(osvi), 0, 0, 0, 0, { 0 }, 0, 0 };
     DWORDLONG const dwlConditionMask = VerSetConditionMask(
@@ -107,6 +110,7 @@ bool is_windows_version_acceptable(const Appcast &item)
     sscanf(item.MinOSVersion.c_str(), "%lu.%lu.%hu", &osvi.dwMajorVersion,
         &osvi.dwMinorVersion, &osvi.wServicePackMajor);
 
+    // Settings::WriteConfigValue("XmlWindowsAccettable", "minver: " + item.MinOSVersion + "" + osvi.dwMajorVersion);
     return VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION |
         VER_SERVICEPACKMAJOR, dwlConditionMask) != FALSE;
 }
@@ -177,8 +181,10 @@ void XMLCALL OnStartElement(void *data, const char *name, const char **attrs)
                         item.ShortVersionString = value;
                     else if (strcmp(name, ATTR_DSASIGNATURE) == 0)
                         item.DsaSignature = value;
-                    else if (strcmp(name, ATTR_OS) == 0)
+                    else if (strcmp(name, ATTR_OS) == 0) {
                         item.Os = value;
+                        // Settings::WriteConfigValue("XmlParsingDebug", "os = " + item.Os);
+                    }
                     else if (strcmp(name, ATTR_ARGUMENTS) == 0)
                         item.InstallerArguments = value;
                 }
@@ -201,14 +207,20 @@ void XMLCALL OnStartElement(void *data, const char *name, const char **attrs)
  */
 bool is_suitable_windows_item(const Appcast &item)
 {
-    if (!is_windows_version_acceptable(item))
+    if (!is_windows_version_acceptable(item)) {
+        // Settings::WriteConfigValue("WindowsSuitable", "no");
         return false;
+    }
 
-    if (item.Os == OS_MARKER)
+    if (item.Os == OS_MARKER) {
+        // Settings::WriteConfigValue("WindowsSuitable", "yes generic");
         return true;
+    }
 
-    if (item.Os.compare(0, OS_MARKER_LEN, OS_MARKER) != 0)
+    if (item.Os.compare(0, OS_MARKER_LEN, OS_MARKER) != 0) {
+        // Settings::WriteConfigValue("WindowsSuitable", "no platform specific");
         return false;
+    }
 
     // Check suffix for matching bitness
 #ifdef _WIN64
@@ -339,8 +351,11 @@ void XMLCALL OnText(void *data, const char *s, int len)
 Appcast Appcast::Load(const std::string& xml)
 {
     XML_Parser p = XML_ParserCreateNS(NULL, NS_SEP);
-    if ( !p )
+    if (!p) 
+    {
+        // Settings::WriteConfigValue("DEBUGXML", "Failed to create XML parser.");
         throw std::runtime_error("Failed to create XML parser.");
+    }
 
     ContextData ctxt(p);
 
@@ -355,13 +370,17 @@ Appcast Appcast::Load(const std::string& xml)
         std::string msg("XML parser error: ");
         msg.append(XML_ErrorString(XML_GetErrorCode(p)));
         XML_ParserFree(p);
+        // Settings::WriteConfigValue("DEBUGXML", "Error: " + msg);
         throw std::runtime_error(msg);
     }
 
     XML_ParserFree(p);
 
     if (ctxt.items.empty())
+    {
+        // Settings::WriteConfigValue("DEBUGXML", "No items");
         return Appcast(); // invalid
+    }
 
     /*
      * Search for first <item> which specifies with the attribute sparkle:os set to "windows"
@@ -376,8 +395,10 @@ Appcast Appcast::Load(const std::string& xml)
         it = std::find_if(ctxt.items.begin(), ctxt.items.end(), is_windows_version_acceptable);
         if (it != ctxt.items.end())
             return *it;
-        else 
+        else {
+            // Settings::WriteConfigValue("DEBUGXML", "No items with specified OS");
             return Appcast(); // There are no items that meet the set minimum os version
+        }
     }
 }
 
